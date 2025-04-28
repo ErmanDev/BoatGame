@@ -2,10 +2,27 @@
 image boat = "boat.png"
 image btn_left = "left.png"
 image btn_right = "right.png"
-image settings = "settings.png"
+image btn_left_hover = "buttonarrowleft_hover.png"
+image btn_right_hover = "buttonarrowright_hover.png"
+image btn_settings = "settings.png"
+image btn_settings_hover = "setting_hover.png"
 image garbage1 = "obstacle_garbage.png"
 image garbage2 = "obstacle_garbage2.png"
 image heart_buff = "heart_buff.png"
+image heart = "heart.png"
+image no_heart = "no_heart.png"
+image game_over_frame = "game_over_frame.png"
+image pause_menu_frame = "paused_frame.png"
+image btn_play_again_idle = "PlayAgain_idle.png"
+image btn_play_again_hover = "PlayAgain_hover.png"
+image btn_main_menu_idle = "Menu_idle.png"
+image btn_main_menu_hover = "Menu_hover.png"
+image btn_quit_idle = "Quit_idle.png"
+image btn_quit_hover = "Quit_hover.png"
+image btn_continue_idle = "Continue_idle.png"
+image btn_continue_hover = "Continue_hover.png"
+image btn_restart_idle =  "Restart_idle.png"
+image btn_restart_hover = "Restart_hover.png"
 
 init python:
     import random
@@ -16,28 +33,29 @@ init python:
     score = 0
     garbage_items = []
     game_running = True
-    show_hitboxes = True  
+    show_hitboxes = False  
     
     last_spawn_time = time.time()
-    spawn_interval = 3.0
+    spawn_interval = 2.0
+    last_column = 2
 
     LEFT_BOUNDARY = 0.15
     RIGHT_BOUNDARY = 0.85
 
     BOAT_HITBOX_WIDTH = 0.08  
-    BOAT_HITBOX_HEIGHT = 0.12  
-    ITEM_HITBOX_WIDTH = 0.06  
-    ITEM_HITBOX_HEIGHT = 0.06  
+    BOAT_HITBOX_HEIGHT = 0.3  
+    ITEM_HITBOX_WIDTH = 0.08 
+    ITEM_HITBOX_HEIGHT = 0.1 
  
     BOAT_YPOS = 0.85
-    BOAT_YANCHOR = 0.5
+    BOAT_YANCHOR = 0.7
 
     def move_boat_left():
         global boat_xpos
         if not game_running:
             return
         boat_xpos = max(LEFT_BOUNDARY, boat_xpos - 0.05)
-        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
+        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR), Transform(zoom=1.5)])
         if show_hitboxes:
             renpy.show("boat_hitbox", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
 
@@ -46,14 +64,14 @@ init python:
         if not game_running:
             return
         boat_xpos = min(RIGHT_BOUNDARY, boat_xpos + 0.05)
-        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
+        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR), Transform(zoom=1.5)])
         if show_hitboxes:
             renpy.show("boat_hitbox", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
 
     def reset_boat_position():
         global boat_xpos
         boat_xpos = 0.5  
-        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
+        renpy.show("boat", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR), Transform(zoom=1.5)])
         if show_hitboxes:
             renpy.show("boat_hitbox", at_list=[Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)])
 
@@ -70,7 +88,7 @@ init python:
             self.active = True
             self.has_scored = False
             self.id = str(renpy.random.random())
-            self.speed = random.uniform(0.015, 0.025)
+            self.speed = random.uniform(0.025, 0.035)
 
             item_img = "garbage" + str(self.type) if self.type <= 2 else "heart_buff"
             item_zoom = 0.4 if self.type <= 2 else 0.35
@@ -98,7 +116,7 @@ init python:
 
             if show_hitboxes:
                 hitbox_color = "#FF000080" if self.type <= 2 else "#00FF0080"
-                renpy.show("item_hitbox" + self.id, what=Solid(hitbox_color, xysize=(ITEM_HITBOX_WIDTH * 100, ITEM_HITBOX_HEIGHT * 100)), 
+                renpy.show("item_hitbox" + self.id, what=Solid(hitbox_color, xysize=(ITEM_HITBOX_WIDTH, ITEM_HITBOX_HEIGHT )), 
                          at_list=[Position(xpos=self.xpos, ypos=self.ypos, xanchor=0.5, yanchor=0.5)])
 
             if self.check_collision():
@@ -112,6 +130,9 @@ init python:
                 self.has_scored = True
                 if self.type <=2:
                     score +=1
+                    if score >= 5:
+                        game_running = False
+                        renpy.jump("next_scene")
 
             if self.ypos > 1.2:
                 self.active = False
@@ -165,27 +186,29 @@ init python:
         garbage_items = []
 
     def restart_game():
-        global health, score, garbage_items, game_running, last_spawn_time
+        global health, score, garbage_items, game_running, last_spawn_time, last_column
         
         health = 3
         score = 0
         game_running = True
         last_spawn_time = time.time()
+        last_column = 2
     
         clear_all_items()
         reset_boat_position()
 
     def spawn_items():
-        global last_spawn_time, spawn_interval, game_running
+        global last_spawn_time, spawn_interval, game_running, last_column
         current_time = time.time()
+        
         if game_running and (current_time - last_spawn_time) >= spawn_interval:
-            column = random.randint(1, 3)
-            new_item = RiverItem(column)
+            last_column = last_column % 3 + 1
+            
+            new_item = RiverItem(last_column)
             garbage_items.append(new_item)
             last_spawn_time = current_time
-
-            base_interval = max(1.5, 4.0 - (score / 50))
-            spawn_interval = random.uniform(base_interval, base_interval + 2.0)
+            
+            spawn_interval = 2.0
 
         if game_running:
             for item in list(garbage_items):
@@ -225,14 +248,19 @@ screen river_game():
 
     imagebutton:
         idle "btn_left"
+        hover "btn_left_hover"
         action Function(move_boat_left)
-        align (0.7, 0.93)
+        align (0.1, 0.93)
+        sensitive game_running
     imagebutton:
         idle "btn_right"
+        hover "btn_right_hover"
         action Function(move_boat_right)
         align (0.9, 0.93)
+        sensitive game_running
     imagebutton:
-        idle "settings"
+        idle "btn_settings"
+        hover "btn_settings_hover"
         action [SetVariable("game_running", False), Show("pause_menu")]
         align (0.99, 0.02)
         sensitive (health > 0)
@@ -243,8 +271,11 @@ screen river_game():
         xalign 0.1
         yalign 0.05
         spacing 10
-        for i in range(health):
-            text "♥" size 80 color "#FF0000" outlines [(2, "#000000", 0, 0)]
+        for i in range(3):
+            if i < health:
+                add "heart" zoom 0.5
+            else:
+                add "no_heart" zoom 0.5
 
     textbutton "Hitboxes (H)":
         action Function(toggle_hitboxes)
@@ -272,51 +303,58 @@ screen river_game():
         text_size 20   
 
     if not game_running and health <= 0:
-        frame:
+        add "game_over_frame.png" at Position(xalign=0.5, yalign=0.5)
+        
+        text "Final Score: [score]" size 40 color "#FFFFFF":
             xalign 0.5
-            yalign 0.5
-            padding (20, 20)
-            background "#0008"
-
-            vbox:
-                spacing 20
-                text "GAME OVER" size 80 color "#FF0000" xalign 0.5
-                text "Final Score: [score]" size 40 color "#FFFFFF" xalign 0.5
-                textbutton "Play Again":
-                    action Function(restart_game)
-                    xalign 0.5
-
-                textbutton "Main Menu":
-                    action MainMenu()
-                    xalign 0.5
-
+            yalign 0.42 
+            
+        imagebutton:
+            idle "btn_play_again_idle"
+            hover "btn_play_again_hover"
+            action Function(restart_game)
+            xalign 0.5
+            yalign 0.53  
+            
+        imagebutton:
+            idle "btn_main_menu_idle"
+            hover "btn_main_menu_hover"
+            action MainMenu()
+            xalign 0.5
+            yalign 0.67  
+                    
     timer 0.1 action Function(spawn_items) repeat True
 
 
 screen pause_menu():
     modal True
-    frame:
+    
+    add "pause_menu_frame" at Position(xalign=0.5, yalign=0.5)
+
+    text "Score: [score]" size 40 color "#FFFFFF":
         xalign 0.5
-        yalign 0.5
-        padding (40, 40)
-        background "#0008"
+        yalign 0.35
+            
+    imagebutton:
+        idle "btn_continue_idle"
+        hover "btn_continue_hover"
+        action [SetVariable("game_running", True), Hide("pause_menu")]
+        xalign 0.5
+        yalign 0.45
 
-        vbox:
-            spacing 30
-            text "PAUSED" size 70 color "#FFFFFF" xalign 0.5
-            text "Score: [score]" size 40 color "#FFFFFF" xalign 0.5
+    imagebutton:
+        idle "btn_restart_idle"
+        hover "btn_restart_hover"
+        action [Function(restart_game), Hide("pause_menu")]
+        xalign 0.5
+        yalign 0.60
 
-            textbutton "Continue":
-                action [SetVariable("game_running", True), Hide("pause_menu")]
-                xalign 0.5
-
-            textbutton "Restart":
-                action [Function(restart_game), Hide("pause_menu")]
-                xalign 0.5
-
-            textbutton "Quit":
-                action MainMenu()
-                xalign 0.5
+    imagebutton:
+        idle "btn_main_menu_idle"
+        hover "btn_main_menu_hover"
+        action MainMenu()
+        xalign 0.5
+        yalign 0.75
 
 label start:
     $ health = 3
@@ -324,15 +362,29 @@ label start:
     $ garbage_items = []
     $ game_running = True
     $ last_spawn_time = time.time()
-    $ spawn_interval = 3.0
+    $ spawn_interval = 2.0
     $ boat_xpos = 0.5
+    $ last_column = 2
 
     show river movie
-    show boat at Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)
+    show boat at Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR), Transform(zoom=1.5)
 
     if show_hitboxes:
-        show boat_hitbox at Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR)
+        show boat_hitbox at Position(xpos=boat_xpos, ypos=BOAT_YPOS, xanchor=0.5, yanchor=BOAT_YANCHOR), Transform(zoom=0.1)
 
     call screen river_game
 
+    return
+
+label next_scene:
+    scene black with fade
+    
+
+
+    centered "{size=100}Next Scene{/size}"
+    
+
+    
+    pause 3.0
+    
     return

@@ -2,9 +2,9 @@
 errors listed below, and try again.
 
 
-File "game/script.rpy", line 382: end of line expected.
-    text "Next Scene" size 100 color "#FFFFFF" xalign 0.5 yalign 0.5
-                      ^
+File "game/script.rpy", line 1108: the zoom keyword argument was not given a value.
+    add number_images[i - 5] zoom. 0.1 
+                                 ^
 
 Ren'Py Version: Ren'Py 8.3.7.25031702
-Mon Apr 28 01:04:11 2025
+Tue Apr 29 16:47:56 2025
